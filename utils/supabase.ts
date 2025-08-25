@@ -15,10 +15,9 @@ export const supabase = createClient(
       persistSession: true,
       autoRefreshToken: true,
     },
+    // Do not set global Content-Type/Accept headers; they break Storage uploads' mimetypes
     global: {
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
         'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       },
     },
