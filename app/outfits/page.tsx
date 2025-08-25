@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { Trash2, X } from 'lucide-react';
 
 type Outfit = {
   id: string;
@@ -20,6 +21,8 @@ export default function OutfitsPage() {
   const [outfits, setOutfits] = useState<Outfit[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Outfit | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOutfits = async () => {
@@ -37,6 +40,17 @@ export default function OutfitsPage() {
     };
     fetchOutfits();
   }, [user?.id]);
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    const original = document.body.style.overflow;
+    if (selected) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [selected]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120]">
@@ -57,48 +71,136 @@ export default function OutfitsPage() {
         ) : (
           <div className="grid grid-cols-1 gap-6">
             {outfits.map((o) => (
-              <div key={o.id} className="bg-white dark:bg-neutral-dark rounded-xl p-5 border border-slate-200 dark:border-slate-700">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              <div key={o.id} className="relative bg-white dark:bg-neutral-dark rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+                <button
+                  aria-label="Delete outfit"
+                  className="absolute top-3 right-3 p-2 rounded hover:bg-slate-100 dark:hover:bg-neutral-darker/50"
+                  disabled={isDeletingId === o.id}
+                  onClick={async () => {
+                    if (!confirm('Delete this outfit?')) return;
+                    setIsDeletingId(o.id);
+                    const { error: delErr } = await supabase.from('outfits').delete().eq('id', o.id);
+                    if (delErr) {
+                      setError(delErr.message);
+                    } else {
+                      setOutfits((prev) => prev.filter((x) => x.id !== o.id));
+                    }
+                    setIsDeletingId(null);
+                  }}
+                >
+                  <Trash2 className="h-5 w-5 text-slate-500" />
+                </button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {o.outfit_images?.slice(0,3).map((src, i) => (
                     <div key={i} className="aspect-square overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
                       <img src={src} alt="outfit" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
-                <div className="space-y-2">
-                  <div className="text-sm text-slate-700 dark:text-slate-200">
-                    <span className="font-medium">Score:</span> {o.outfit_score ?? 'N/A'}
+
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const total = 10;
+                      const filled = Math.max(0, Math.min(total, Math.round(o.outfit_score || 0)));
+                      return (
+                        <>
+                          <div className="text-amber-400 text-lg" aria-label={`score-${filled}-of-${total}`}>
+                            {Array.from({ length: total }).map((_, i) => (
+                              <span key={i}>{i < filled ? '★' : '☆'}</span>
+                            ))}
+                          </div>
+                          <span className="text-sm text-slate-600 dark:text-slate-300">{filled}/10</span>
+                        </>
+                      );
+                    })()}
                   </div>
-                  {o.selected_items && o.selected_items.length > 0 && (
-                    <div className="text-sm text-slate-700 dark:text-slate-200">
-                      <span className="font-medium">Selected items:</span> {o.selected_items.join(', ')}
-                    </div>
-                  )}
-                  {o.pros && (
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-white">Pros</div>
-                      <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{o.pros}</pre>
-                    </div>
-                  )}
-                  {o.cons && (
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-white">Cons</div>
-                      <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{o.cons}</pre>
-                    </div>
-                  )}
-                  {o.suggestion && (
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-white">Suggestion</div>
-                      <p className="text-sm text-slate-700 dark:text-slate-300">{o.suggestion}</p>
-                    </div>
-                  )}
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Saved {new Date(o.created_at).toLocaleString()}</div>
+                  <button
+                    className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-neutral-darker"
+                    onClick={() => setSelected(o)}
+                  >
+                    Details
+                  </button>
                 </div>
+
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Saved {new Date(o.created_at).toLocaleString()}</div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSelected(null)} />
+          <div className="relative z-10 max-w-3xl w-full mx-4 bg-white dark:bg-neutral-dark rounded-xl border border-slate-200 dark:border-slate-700 p-5 max-h-[90vh] overflow-y-auto">
+            <button
+              aria-label="Close details"
+              onClick={() => setSelected(null)}
+              className="absolute top-3 right-3 p-2 rounded hover:bg-slate-100 dark:hover:bg-neutral-darker/50"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Outfit Details</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              {selected.outfit_images?.slice(0,3).map((src, i) => (
+                <div key={i} className="aspect-square overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <img src={src} alt="outfit" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 mb-3">
+              {(() => {
+                const total = 10;
+                const filled = Math.max(0, Math.min(total, Math.round(selected.outfit_score || 0)));
+                return (
+                  <>
+                    <div className="text-amber-400 text-lg" aria-label={`score-${filled}-of-${total}`}>
+                      {Array.from({ length: total }).map((_, i) => (
+                        <span key={i}>{i < filled ? '★' : '☆'}</span>
+                      ))}
+                    </div>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">{filled}/10</span>
+                  </>
+                );
+              })()}
+            </div>
+
+            {selected.selected_items && selected.selected_items.length > 0 && (
+              <div className="mb-3 text-sm text-slate-700 dark:text-slate-200">
+                <div className="font-medium mb-1">Selected items:</div>
+                <ul className="list-disc pl-5 space-y-1">
+                  {selected.selected_items.map((it, idx) => (
+                    <li key={idx}>{it}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {selected.pros && (
+              <div className="mb-3">
+                <div className="font-medium text-slate-900 dark:text-white">Pros</div>
+                <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{selected.pros}</pre>
+              </div>
+            )}
+            {selected.cons && (
+              <div className="mb-3">
+                <div className="font-medium text-slate-900 dark:text-white">Cons</div>
+                <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{selected.cons}</pre>
+              </div>
+            )}
+            {selected.suggestion && (
+              <div className="mb-1">
+                <div className="font-medium text-slate-900 dark:text-white">Suggestion</div>
+                <p className="text-sm text-slate-700 dark:text-slate-300">{selected.suggestion}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

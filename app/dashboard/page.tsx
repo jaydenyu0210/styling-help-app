@@ -477,10 +477,11 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <span className="text-slate-700 dark:text-slate-200 text-sm">Score:</span>
                 <div className="text-amber-400" aria-label={`score-${score}`}>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i}>{i < score ? '★' : '☆'}</span>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <span key={i}>{i < (score || 0) ? '★' : '☆'}</span>
                   ))}
                 </div>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{score}/10</span>
               </div>
               {pros && (
                 <div>

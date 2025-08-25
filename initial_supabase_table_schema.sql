@@ -121,7 +121,7 @@ create table public.outfits (
     array_length(outfit_images, 1) >= 1 AND array_length(outfit_images, 1) <= 3
   ),
   constraint outfit_score_range_check check (
-    outfit_score is null or (outfit_score >= 1 and outfit_score <= 5)
+    outfit_score is null or (outfit_score >= 1 and outfit_score <= 10)
   )
 ) TABLESPACE pg_default;
 

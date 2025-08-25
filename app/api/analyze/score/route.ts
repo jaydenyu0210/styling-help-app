@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
     const description = [
       'You are a senior fashion stylist. Evaluate the outfit across these criteria: coherence (does everything belong together), silhouette (overall proportions, balance, and lines), fit (tailoring and drape), color harmony (palette cohesion, contrast, undertones), and styling (layering, balance of casual/formal, intentionality).',
       `User-selected items (prioritize in judgment and suggestions): ${selectedItems.join(', ') || 'None'}.`,
-      'Give a 1–5 integer score (no decimals). Then write more descriptive pros and cons as clear bullet points (use \\"- \\"). Pros should highlight strong choices. Cons should give specific, constructive notes. Finally, give a practical, clothing-related suggestion that references the selected items when possible: propose adjustments in color, fit, length, cuff/hem treatment, tucking, rolling sleeves, swapping a layer, or a different wash/pattern. Avoid generic accessory-only advice.',
-      'Return JSON ONLY with keys: score (1-5), pros (string), cons (string), suggestion (string). For pros/cons, include multiple bullet lines separated by \n and starting with \\"- \\\". If something is not applicable, return an empty string for that field.',
+      'Give a 1–10 integer score (no decimals). Then write more descriptive pros and cons as clear bullet points (use \\"- \\"). Pros should highlight strong choices. Cons should give specific, constructive notes. Finally, give a practical, clothing-related suggestion that references the selected items when possible: propose adjustments in color, fit, length, cuff/hem treatment, tucking, rolling sleeves, swapping a layer, or a different wash/pattern. Avoid generic accessory-only advice.',
+      'Return JSON ONLY with keys: score (1-10), pros (string), cons (string), suggestion (string). For pros/cons, include multiple bullet lines separated by \n and starting with \\"- \\\". If something is not applicable, return an empty string for that field.',
     ].join(' ');
 
     const content: Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }> = [
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       // do nothing
     }
 
-    const score = typeof parsed.score === 'number' ? Math.max(1, Math.min(5, Math.round(parsed.score))) : null;
+    const score = typeof parsed.score === 'number' ? Math.max(1, Math.min(10, Math.round(parsed.score))) : null;
     return NextResponse.json({
       score,
       pros: parsed.pros ?? null,
