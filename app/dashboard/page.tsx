@@ -324,18 +324,17 @@ export default function Dashboard() {
       });
     };
     try {
-      const uploadedPaths: string[] = [];
-      for (const file of files) {
-        const path = `${user.id}/${crypto.randomUUID()}-${file.name}`;
-        const blob = await fileToCompressedBlob(file);
-        const { error: uploadError } = await withTimeout(
-          supabase.storage.from('outfits').upload(path, blob, { upsert: false }),
-          45000,
-          'image upload'
-        );
-        if (uploadError) throw uploadError;
-        uploadedPaths.push(path);
-      }
+      const uploadedPaths: string[] = await Promise.all(
+        files.map(async (file) => {
+          const path = `${user.id}/${crypto.randomUUID()}-${file.name}`;
+          const blob = await fileToCompressedBlob(file, 1400, 0.8);
+          const { error } = await supabase.storage
+            .from('outfits')
+            .upload(path, blob, { upsert: false, contentType: 'image/jpeg' });
+          if (error) throw error;
+          return path;
+        })
+      );
       const publicUrls = uploadedPaths.map((p) => supabase.storage.from('outfits').getPublicUrl(p).data.publicUrl);
       const chosen = Object.keys(selectedItems).filter((k) => selectedItems[k]);
       const insertRes = await supabase.from('outfits').insert({

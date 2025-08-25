@@ -18,11 +18,10 @@ export async function POST(req: NextRequest) {
     }
 
     const description = [
-      'Rate the outfit visual appeal from 1 to 5 stars considering coherence, silhouette, fit, color harmony, and styling.',
-      `User-selected items: ${selectedItems.join(', ') || 'None'}.`,
-      'Return JSON with keys: score (1-5 integer), pros (string|null), cons (string|null), suggestion (string|null).',
-      'If score >= 4, focus more on pros; if <= 3, focus more on cons; always include suggestion.',
-      'Output strictly as JSON. '
+      'You are a senior fashion stylist. Evaluate the outfit across these criteria: coherence (does everything belong together), silhouette (overall proportions, balance, and lines), fit (tailoring and drape), color harmony (palette cohesion, contrast, undertones), and styling (layering, balance of casual/formal, intentionality).',
+      `User-selected items (prioritize in judgment and suggestions): ${selectedItems.join(', ') || 'None'}.`,
+      'Give a 1–5 integer score (no decimals). Then write more descriptive pros and cons as clear bullet points (use \\"- \\"). Pros should highlight strong choices. Cons should give specific, constructive notes. Finally, give a practical, clothing-related suggestion that references the selected items when possible: propose adjustments in color, fit, length, cuff/hem treatment, tucking, rolling sleeves, swapping a layer, or a different wash/pattern. Avoid generic accessory-only advice.',
+      'Return JSON ONLY with keys: score (1-5), pros (string), cons (string), suggestion (string). For pros/cons, include multiple bullet lines separated by \n and starting with \\"- \\\". If something is not applicable, return an empty string for that field.',
     ].join(' ');
 
     const content: Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }> = [

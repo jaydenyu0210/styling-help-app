@@ -18,10 +18,11 @@ export async function POST(req: NextRequest) {
       {
         type: 'text',
         text: [
-          'You are a fashion assistant. Analyze the images and extract distinct clothing items visible on a person.',
-          'Return a concise JSON object with an array of generic clothing item names (e.g., "T-shirt", "Jeans", "Sneakers").',
-          'Avoid colors, brands, and materials. Only include items you are confident are clothing-related.',
-          'Output format strictly as: {"items":["..."]}',
+          'You are a precise fashion vision assistant. Analyze ALL provided images and list DISTINCT clothing items worn by the person(s).',
+          'Make each item description more informative than a generic label: include specific garment subtype and one to two useful qualifiers such as fit/silhouette, length, neckline/collar, wash/pattern, or fabric weight when confidently visible (e.g., "slim-fit dark-wash jeans", "oversized crewneck sweatshirt", "cropped double-breasted blazer").',
+          'Do not include brands or logos. Avoid guessing exact materials unless obvious (e.g., denim). Prefer concise phrases (≤ 6 words) that still convey styling detail.',
+          'Deduplicate across images. Return 3–12 items total if visible; otherwise fewer.',
+          'Return JSON ONLY in the format: {"items":["..."]}',
         ].join(' ')
       },
       ...images.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
