@@ -54,7 +54,7 @@ export default function TopBar() {
       <div className="max-w-7xl mx-auto flex justify-between items-center px-4 py-3">
         <Link href="/" className="text-md sm:text-lg font-medium text-text dark:text-text-dark flex items-center gap-2 hover:opacity-80 transition-opacity">
           <span className="text-2xl">🎬</span>
-          <span className="font-sans">NextTemp</span>
+          <span className="font-sans">styling.ai</span>
         </Link>
 
         <div className="flex items-center gap-4">

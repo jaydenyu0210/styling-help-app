@@ -4,10 +4,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from '@/contexts/AuthContext';
 import TopBar from '../components/TopBar';
-import ProtectedRoute from '@/contexts/ProtectedRoute';
 import { Analytics } from "@vercel/analytics/react"
-// import { PostHogProvider } from '@/contexts/PostHogContext';
-// import { PostHogErrorBoundary } from '@/components/PostHogErrorBoundary';
 
 const geist = Geist({ subsets: ['latin'] });
 
@@ -16,20 +13,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  console.log('RootLayout: Rendering');
   return (
     <html lang="en">
-      <body className={geist.className}>
+      <body className={geist.className} suppressHydrationWarning={true}>
         <Analytics mode="auto" />
-        {/* <PostHogErrorBoundary>
-          <PostHogProvider> */}
-            <AuthProvider>   
-                <ProtectedRoute>
-                  <TopBar />    
-                  <main>{children}</main>
-                </ProtectedRoute>
-            </AuthProvider>
-          {/* </PostHogProvider>
-        </PostHogErrorBoundary> */}
+        <AuthProvider>   
+          <TopBar />    
+          <main>{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );

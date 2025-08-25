@@ -102,3 +102,36 @@ CREATE POLICY "Users can insert their own subscriptions" ON public.subscriptions
 
 CREATE POLICY "Service role full access to subscriptions" ON public.subscriptions
   FOR ALL TO service_role USING (true);
+
+create table public.outfits (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  outfit_images text[] not null check (array_length(outfit_images, 1) >= 1 and array_length(outfit_images, 1) <= 3),
+  outfit_score integer not null check (outfit_score >= 1 and outfit_score <= 5),
+  pros text null,
+  cons text null,
+  suggestions text null,
+  created_at timestamp with time zone not null default timezone ('utc'::text, now()),
+  updated_at timestamp with time zone not null default timezone ('utc'::text, now()),
+  constraint outfits_pkey primary key (id),
+  constraint outfits_user_id_fkey foreign KEY (user_id) references users (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+-- Enable RLS on outfits table
+ALTER TABLE public.outfits ENABLE ROW LEVEL SECURITY;
+
+-- Outfits table policies
+CREATE POLICY "Users can read their own outfits" ON public.outfits
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own outfits" ON public.outfits
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own outfits" ON public.outfits
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own outfits" ON public.outfits
+  FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Service role full access to outfits" ON public.outfits
+  FOR ALL TO service_role USING (true);

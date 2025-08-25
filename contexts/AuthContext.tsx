@@ -77,63 +77,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let mounted = true;
-    console.log("AuthContext - mounted useEffect:", mounted);
+    console.log("AuthContext - Starting simplified initialization");
     
-    const initializeAuth = async () => {
-      try {
-        setIsLoading(true);
-        console.log("AuthContext - Starting Try in InitializeAuth!");
-
-        // // First, get initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error || !mounted) {
-          setIsLoading(false);
-          return;
-        }
-
-        // Update initial state
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          await checkSubscription(currentUser.id);
-        }
-        
-        // Then set up listener for future changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (_event, newSession) => {
-            if (!mounted) return;
-            
-            const newUser = newSession?.user ?? null;
-            setSession(newSession);
-            setUser(newUser);
-            
-            if (newUser) {
-              await checkSubscription(newUser.id);
-            } else {
-              setIsSubscriber(false);
-            }
+    let mounted = true;
+    let hasInitialized = false;
+    
+    // Set up auth state listener first - this will catch sessions set by the callback
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("AuthContext - Auth state changed:", event, !!session, session?.user?.email);
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (!hasInitialized) {
+            setIsLoading(false);
+            hasInitialized = true;
+            console.log("AuthContext - Initialized from state change");
           }
-        );
+        }
+      }
+    );
 
-        // Only set loading to false after everything is initialized
-        if (mounted) setIsLoading(false);
+    // Also try to get initial session, but don't rely on it
+    const initSession = async () => {
+      try {
+        console.log("AuthContext - About to call getSession()");
         
-        return () => {
-          mounted = false;
-          subscription.unsubscribe();
-        };
+        // Try with a shorter timeout since it seems to hang
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('getSession timeout after 2s')), 2000)
+        );
+        
+        const result = await Promise.race([sessionPromise, timeoutPromise]);
+        const { data: { session }, error } = result;
+        console.log("AuthContext - Got session:", !!session, "Error:", error);
+        
+        if (mounted && !hasInitialized) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setIsLoading(false);
+          hasInitialized = true;
+          console.log("AuthContext - Set initial state, loading complete");
+        }
       } catch (error) {
-        console.error("Auth initialization error:", error);
-        if (mounted) setIsLoading(false);
+        console.error("AuthContext - Error getting session:", error);
+        if (mounted && !hasInitialized) {
+          setIsLoading(false);
+          hasInitialized = true;
+          console.log("AuthContext - Set loading false due to error");
+        }
       }
     };
 
-    initializeAuth();
-  }, [checkSubscription]);
+    // Set a fallback timeout to ensure loading state doesn't hang forever
+    const fallbackTimeout = setTimeout(() => {
+      if (mounted && !hasInitialized) {
+        console.log("AuthContext - Fallback timeout, setting loading to false");
+        setIsLoading(false);
+        hasInitialized = true;
+      }
+    }, 3000);
+
+    initSession();
+
+    return () => {
+      mounted = false;
+      clearTimeout(fallbackTimeout);
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const value = {
     user,
@@ -141,12 +154,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     supabase,
     signInWithGoogle: async () => {
-      await supabase.auth.signInWithOAuth({
+      console.log('AuthContext: Starting Google OAuth flow');
+      console.log('AuthContext: Redirect URL will be:', `${window.location.origin}/auth/callback`);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`
         }
       });
+      
+      console.log('AuthContext: OAuth response:', { data, error });
+      
+      if (error) {
+        console.error('AuthContext: OAuth error:', error);
+      }
     },
     signInWithEmail: async (email: string, password: string) => {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({

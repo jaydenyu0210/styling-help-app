@@ -5,7 +5,7 @@ import { PricingSection } from '@/components/PricingSection';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
 // import { DemoWidget } from '@/components/DemoWidget';
 // import { MetricCard } from '@/components/MetricCard';
-import { TypewriterEffect } from '@/components/TypewriterEffect';
+// import { TypewriterEffect } from '@/components/TypewriterEffect';
 import { FaReddit } from 'react-icons/fa';
 import { 
   FaGithub, 
@@ -32,26 +32,18 @@ import { VideoModal } from '@/components/VideoModal';
 // Update workflowSteps to be more generic
 const workflowSteps = [
   {
-    title: "Step One",
-    description: "First step of your workflow",
-    preview: <TypewriterEffect text="Processing step one..." />
+    title: "Upload Photos",
+    description: "Take or upload 1-3 photos of your outfit"
   },
   {
-    title: "Step Two",
-    description: "Second step of your workflow",
-    preview: <TypewriterEffect text="Executing step two..." />
+    title: "AI Analysis",
+    description: "Our AI analyzes your clothing items and style"
   },
   {
-    title: "Step Three",
-    description: "Third step of your workflow",
-    preview: <TypewriterEffect text="Running step three..." />
-  },
-  {
-    title: "Step Four",
-    description: "Fourth step of your workflow",
-    preview: <TypewriterEffect text="Completing step four..." />
+    title: "Get Feedback",
+    description: "Receive personalized styling suggestions"
   }
-];
+]
 
 // Update platforms to be generic
 const platforms = [
@@ -244,11 +236,11 @@ export default function LandingPage() {
             {/* Header Content */}
             <div className="text-center">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white">
-                <span className="block">Next.js + Stripe + Supabase</span>
-                <span className="block text-primary dark:text-primary-light">Production-Ready Template</span>
+                <span className="block">AI Generated Suggestions</span>
+                <span className="block text-primary dark:text-primary-light">Styling Help Tool</span>
               </h1>
               <p className="mt-6 max-w-2xl mx-auto text-lg text-slate-600 dark:text-slate-300">
-                Start building with authentication and payments in minutes.
+                Start using it to help with your styling needs.
               </p>
               
               {/* CTA Buttons */}
@@ -274,25 +266,7 @@ export default function LandingPage() {
             <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Code Preview */}
               <div className="relative">
-                <pre className="relative rounded-xl bg-slate-900 p-8 shadow-2xl">
-                  <code className="text-sm sm:text-base text-slate-100">
-                    <TypewriterEffect text={`// 🚀 The Ultimate Dev Setup
-import { useCoffee, useCode } from '@/hooks/dev';
-
-export const DevLife = () => {
-  const { coffee } = useCoffee();
-  const { bugs } = useCode();
-  
-  return (
-    <div className="dev-life">
-      <Status>
-        {coffee ? '⚡️ Coding Mode' : '😴 Need Coffee'}
-        {bugs === 0 ? '🎉 No Bugs!' : '🐛 Debug Time'}
-      </Status>
-    </div>
-  );`} />
-                  </code>
-                </pre>
+              
               </div>
 
               {/* Workflow Steps */}

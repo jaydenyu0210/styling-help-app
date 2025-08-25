@@ -27,8 +27,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     }
   }, [user, isLoading, pathname]);
 
-  // Show loading state only if actually loading
-  if (isLoading) {
+  // Don't show loading screen for public routes
+  if (isLoading && !PUBLIC_ROUTES.includes(pathname)) {
     return (
       <div className="min-h-screen flex flex-col space-y-4 items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
