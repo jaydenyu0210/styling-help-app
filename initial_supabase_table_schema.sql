@@ -102,3 +102,72 @@ CREATE POLICY "Users can insert their own subscriptions" ON public.subscriptions
 
 CREATE POLICY "Service role full access to subscriptions" ON public.subscriptions
   FOR ALL TO service_role USING (true);
+
+-- Outfits table for storing analyzed outfits
+create table public.outfits (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  outfit_images text[] not null,
+  selected_items text[] null,
+  outfit_score integer null,
+  pros text null,
+  cons text null,
+  suggestion text null,
+  created_at timestamp with time zone not null default timezone ('utc'::text, now()),
+  updated_at timestamp with time zone not null default timezone ('utc'::text, now()),
+  constraint outfits_pkey primary key (id),
+  constraint outfits_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE,
+  constraint outfit_images_length_check check (
+    array_length(outfit_images, 1) >= 1 AND array_length(outfit_images, 1) <= 3
+  ),
+  constraint outfit_score_range_check check (
+    outfit_score is null or (outfit_score >= 1 and outfit_score <= 5)
+  )
+) TABLESPACE pg_default;
+
+-- Enable RLS on outfits
+ALTER TABLE public.outfits ENABLE ROW LEVEL SECURITY;
+
+-- Outfits policies
+CREATE POLICY "Users can read their own outfits" ON public.outfits
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own outfits" ON public.outfits
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own outfits" ON public.outfits
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own outfits" ON public.outfits
+  FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Service role full access to outfits" ON public.outfits
+  FOR ALL TO service_role USING (true);
+
+-- Create storage bucket for outfit images (public read) - compatible approach
+insert into storage.buckets (id, name, public)
+values ('outfits', 'outfits', true)
+on conflict (id) do nothing;
+
+-- Storage policies for outfits bucket
+create policy "Public read access for outfits bucket" on storage.objects
+  for select using (bucket_id = 'outfits');
+
+create policy "Authenticated users can upload to outfits bucket in their folder" on storage.objects
+  for insert with check (
+    bucket_id = 'outfits' and
+    (auth.role() = 'authenticated') and
+    (position(auth.uid()::text || '/' in name) = 1)
+  );
+
+create policy "Users can update their own objects in outfits bucket" on storage.objects
+  for update using (
+    bucket_id = 'outfits' and
+    (position(auth.uid()::text || '/' in name) = 1)
+  );
+
+create policy "Users can delete their own objects in outfits bucket" on storage.objects
+  for delete using (
+    bucket_id = 'outfits' and
+    (position(auth.uid()::text || '/' in name) = 1)
+  );

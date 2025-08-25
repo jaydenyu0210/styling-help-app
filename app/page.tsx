@@ -244,11 +244,11 @@ export default function LandingPage() {
             {/* Header Content */}
             <div className="text-center">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white">
-                <span className="block">Next.js + Stripe + Supabase</span>
-                <span className="block text-primary dark:text-primary-light">Production-Ready Template</span>
+                <span className="block">AI Stylist</span>
+                <span className="block text-primary dark:text-primary-light">Helping you look your best</span>
               </h1>
               <p className="mt-6 max-w-2xl mx-auto text-lg text-slate-600 dark:text-slate-300">
-                Start building with authentication and payments in minutes.
+                AI Stylist is a platform that helps you make your style more fashionable.
               </p>
               
               {/* CTA Buttons */}

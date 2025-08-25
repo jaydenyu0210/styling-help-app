@@ -110,6 +110,17 @@ export default function TopBar() {
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-surface-light dark:bg-surface-dark rounded-lg shadow-hover py-1 z-[60] border border-gray-200 dark:border-gray-700">
                     <Link
+                      href="/dashboard"
+                      className="block px-4 py-2 text-sm text-text dark:text-text-dark hover:bg-neutral dark:hover:bg-neutral-dark"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsDropdownOpen(false);
+                        window.location.href = '/dashboard';
+                      }}
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
                       href="/profile"
                       className="block px-4 py-2 text-sm text-text dark:text-text-dark hover:bg-neutral dark:hover:bg-neutral-dark"
                       onClick={(e) => {
