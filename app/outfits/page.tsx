@@ -41,6 +41,45 @@ export default function OutfitsPage() {
     fetchOutfits();
   }, [user?.id]);
 
+  // Real-time subscriptions: reflect inserts and deletes immediately
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`outfits-changes-${user.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'outfits',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        const row = payload.new as any;
+        setOutfits((prev) => [{
+          id: row.id,
+          outfit_images: row.outfit_images || [],
+          selected_items: row.selected_items || [],
+          outfit_score: row.outfit_score,
+          pros: row.pros,
+          cons: row.cons,
+          suggestion: row.suggestion,
+          created_at: row.created_at
+        }, ...prev]);
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'outfits',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        const row = payload.old as any;
+        setOutfits((prev) => prev.filter(o => o.id !== row.id));
+      })
+      .subscribe();
+
+    return () => {
+      try { channel.unsubscribe(); } catch {}
+    };
+  }, [user?.id]);
+
   // Prevent background scroll when modal is open
   useEffect(() => {
     const original = document.body.style.overflow;
@@ -84,6 +123,12 @@ export default function OutfitsPage() {
                       setError(delErr.message);
                     } else {
                       setOutfits((prev) => prev.filter((x) => x.id !== o.id));
+                      // Fire-and-forget edge function (optional), ignore failures
+                      try {
+                        await supabase.functions.invoke('outfit-event', {
+                          body: { type: 'deleted', outfitId: o.id, userId: user?.id }
+                        });
+                      } catch {}
                     }
                     setIsDeletingId(null);
                   }}
